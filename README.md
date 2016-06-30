@@ -1,6 +1,7 @@
 [![NPM](https://nodei.co/npm/localer.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/localer/)
 
 # Localer
+
 Locales collector from js sources.
 
 # API
