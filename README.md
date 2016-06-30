@@ -23,5 +23,5 @@ Show difference info.
 # Global usage
 
 ```
-localer [...glob patterns] [--html to generate html] [--plain to show list of locales at end] [--compare [path to file] to show difference]
+localer [...glob patterns] [--html to generate html] [--plain to show list of locales at the end] [--compare [path to file] to show difference]
 ```
