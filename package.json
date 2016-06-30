@@ -1,0 +1,56 @@
+{
+  "name": "localer",
+  "version": "1.0.0",
+  "description": "Locales collector from js sources.",
+  "main": "lib/lib.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "compile": "babel ./src -d ./lib",
+    "prepublish": "npm run compile"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TrigenSoftware/Localer.git"
+  },
+  "keywords": [
+    "i18n",
+    "i18n-node",
+    "i18n-for-browser",
+    "locales"
+  ],
+  "author": "dangreen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/TrigenSoftware/Localer/issues"
+  },
+  "homepage": "https://github.com/TrigenSoftware/Localer#readme",
+  "dependencies": {
+    "ansi-to-html": "^0.4.1",
+    "argue-cli": "^1.1.1",
+    "babel-code-frame": "^6.11.0",
+    "babel-traverse": "^6.10.4",
+    "babylon": "^6.8.2",
+    "colour": "^0.7.1",
+    "escape-html": "^1.0.3",
+    "glob": "^7.0.5"
+  },
+  "devDependencies": {
+    "babel-plugin-add-module-exports": "^0.1.2",
+    "babel-cli": "^6.4.5",
+    "babel-preset-es2015": "^6.3.13",
+    "babel-preset-stage-0": "^6.3.13",
+    "babel-register": "^6.4.3"
+  },
+  "babel": {
+    "presets": [
+      "es2015",
+      "stage-0"
+    ],
+    "plugins": [
+      "add-module-exports"
+    ]
+  },
+  "bin": {
+    "localer": "./lib/bin.js"
+  }
+}
