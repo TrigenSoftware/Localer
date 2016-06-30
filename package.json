@@ -1,6 +1,6 @@
 {
   "name": "localer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Locales collector from js sources.",
   "main": "lib/lib.js",
   "scripts": {
