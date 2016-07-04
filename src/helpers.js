@@ -1,28 +1,31 @@
 import Glob    from 'glob';
 import * as Fs from 'fs';
 
-Object.defineProperty(Array.prototype, 'asyncForEach', {
-    value(callback, resolvedObject) {
+if (!Array.prototype.hasOwnProperty('asyncForEach')) {
+    
+    Object.defineProperty(Array.prototype, 'asyncForEach', {
+        value(callback, resolvedObject) {
 
-        var balancer = 0, i = 0, _this = this;
+            var balancer = 0, i = 0, _this = this;
 
-        return new Promise((resolve, reject) => {
+            return new Promise((resolve, reject) => {
 
-            if (!_this.length) {
-                return resolve(resolvedObject);
-            }
-
-            callback(_this[i], i++).then(function next() {
-
-                if (i >= _this.length) {
+                if (!_this.length) {
                     return resolve(resolvedObject);
                 }
 
-                return callback(_this[i], i++).then(next).catch(reject);
-            }).catch(reject); 
-        });
-    }
-});
+                callback(_this[i], i++).then(function next() {
+
+                    if (i >= _this.length) {
+                        return resolve(resolvedObject);
+                    }
+
+                    return callback(_this[i], i++).then(next).catch(reject);
+                }).catch(reject); 
+            });
+        }
+    });
+}
 
 export function readFile(file) {
     return new Promise((resolve, reject) => {
