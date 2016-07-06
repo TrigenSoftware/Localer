@@ -27,6 +27,20 @@ if (!Array.prototype.hasOwnProperty('asyncForEach')) {
     });
 }
 
+if (!Array.prototype.hasOwnProperty('pushUnique')) {
+    
+    Object.defineProperty(Array.prototype, 'pushUnique', {
+        value(element) {
+
+            if (this.indexOf(element) != -1) {
+                return element;
+            }
+
+            return this.push(element);
+        }
+    });
+}
+
 export function readFile(file) {
     return new Promise((resolve, reject) => {
         Fs.readFile(file, 'utf8', (err, data) => {

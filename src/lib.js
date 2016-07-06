@@ -233,9 +233,9 @@ export function traverseGlob(masks, info = []) {
  */
 export function terminalReport(info, withPlain = false) {
 
-	var report      = "",
-		plain       = "", 
-		currentFile = "";
+	var report      = "", 
+		currentFile = "",
+		plain       = [];
 
 	info.forEach(({ file, string, fn, codeFrame }) => {
 
@@ -249,7 +249,7 @@ export function terminalReport(info, withPlain = false) {
 			report += `${'String:'.yellow} ${string.green}\n\n`;
 
 			if (withPlain) {
-				plain += string + "\n";
+				plain.pushUnique(string);
 			}
 
 		} else {
@@ -260,7 +260,7 @@ export function terminalReport(info, withPlain = false) {
 	});
 
 	if (withPlain) {
-		report += `\nPlain:\n\n${plain}`;
+		report += `\nPlain:\n\n${plain.join("\n")}`;
 	}
 
 	return report;
@@ -276,8 +276,8 @@ export function terminalReport(info, withPlain = false) {
 export function htmlReport(info, withPlain = false) {
 
 	var report      = "",
-		plain       = "",
-		currentFile = "";
+		currentFile = "",
+		plain       = [];
 
 	info.forEach(({ file, string, fn, codeFrame }) => {
 
@@ -291,7 +291,7 @@ export function htmlReport(info, withPlain = false) {
 			report += `<h3>String:&nbsp;<span>${string}</span></h2>`;
 
 			if (withPlain) {
-				plain += string + "\n";
+				plain.pushUnique(string);
 			}
 
 		} else {
@@ -303,7 +303,7 @@ export function htmlReport(info, withPlain = false) {
 	});
 
 	if (withPlain) {
-		report += `<br><h1>Plain:</h1><pre>${escapeHtml(plain)}</pre><br>`;
+		report += `<br><h1>Plain:</h1><pre>${escapeHtml(plain.join("\n"))}</pre><br>`;
 	}
 
 	report = `
