@@ -14,20 +14,20 @@ Collect locales from file.
 Collect locales from files by glob pattern.
 
 
-### String terminalReport(Array<Object> info, Boolean withPlain = false)
+### String terminalReport(Array<Object>|Object{added:Array<Object>, unused:Array<String>} info, Boolean withPlain = false)
 Generate report for terminal.
 
 
-### String htmlReport(Array<Object> info, Boolean withPlain = false)
+### String htmlReport(Array<Object>|Object{added:Array<Object>, unused:Array<String>} info, Boolean withPlain = false)
 Generate report as html.
 
 
-### diff(Array<Object> info, String pathToJson)
+### Object{added:Array<Object>, unused:Array<String>} diff(Array<Object> info, String pathToJson)
 Show difference info.
 
 
 # Global usage
 
 ```
-localer [...glob patterns] [--html to generate html] [--plain to show list of locales at the end] [--compare [path to file] to show difference]
+localer [...glob patterns] [--html to generate html] [--summary to show list of added and unused locales] [--compare [path to file] to show difference]
 ```

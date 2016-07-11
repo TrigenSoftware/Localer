@@ -227,15 +227,21 @@ export function traverseGlob(masks, info = []) {
 /**
  * Generate report for terminal.
  * 
- * @param  {Array<Object>}  info
- * @param  {Boolean}        withPlain
+ * @param  {Array<Object>|Object{added:Array<Object>, unused:Array<String>}} info
+ * @param  {Boolean} withSummary
  * @return {String} 
  */
-export function terminalReport(info, withPlain = false) {
+export function terminalReport(info, withSummary = false) {
 
 	var report      = "", 
 		currentFile = "",
-		plain       = [];
+		added       = [],
+		unused      = [];
+
+	if (!Array.isArray(info)) {
+		unused  = info.unused;
+		info    = info.added;
+	}
 
 	info.forEach(({ file, string, fn, codeFrame }) => {
 
@@ -248,8 +254,8 @@ export function terminalReport(info, withPlain = false) {
 
 			report += `${'String:'.yellow} ${string.green}\n\n`;
 
-			if (withPlain) {
-				plain.pushUnique(string);
+			if (withSummary) {
+				added.pushUnique(string);
 			}
 
 		} else {
@@ -259,8 +265,19 @@ export function terminalReport(info, withPlain = false) {
 		report += `${codeFrame}\n\n`;
 	});
 
-	if (withPlain) {
-		report += `\nPlain:\n\n${plain.join("\n")}`;
+	if (withSummary && (added.length || unused.length)) {
+
+		var summary = "\nSummary:\n\n";
+
+		if (added.length) {
+			summary += `Added:\n\n${added.join("\n")}\n\n`;
+		}
+
+		if (unused.length) {
+			summary += `Unused:\n\n${unused.join("\n")}\n\n`;
+		}
+
+		report = summary + report;
 	}
 
 	return report;
@@ -269,15 +286,21 @@ export function terminalReport(info, withPlain = false) {
 /**
  * Generate report as html.
  * 
- * @param  {Array<Object>}  info
- * @param  {Boolean}        withPlain
+ * @param  {Array<Object>|Object{added:Array<Object>, unused:Array<String>}} info
+ * @param  {Boolean} withSummary
  * @return {String} 
  */
-export function htmlReport(info, withPlain = false) {
+export function htmlReport(info, withSummary = false) {
 
 	var report      = "",
 		currentFile = "",
-		plain       = [];
+		added       = [],
+		unused     = [];
+
+	if (!Array.isArray(info)) {
+		unused = info.unused;
+		info    = info.added;
+	}
 
 	info.forEach(({ file, string, fn, codeFrame }) => {
 
@@ -290,8 +313,8 @@ export function htmlReport(info, withPlain = false) {
 
 			report += `<h3>String:&nbsp;<span>${string}</span></h2>`;
 
-			if (withPlain) {
-				plain.pushUnique(string);
+			if (withSummary) {
+				added.pushUnique(string);
 			}
 
 		} else {
@@ -302,8 +325,19 @@ export function htmlReport(info, withPlain = false) {
 		report += `<small>${file}</small><br>`;
 	});
 
-	if (withPlain) {
-		report += `<br><h1>Plain:</h1><pre>${escapeHtml(plain.join("\n"))}</pre><br>`;
+	if (withSummary && (added.length || unused.length)) {
+
+		var summary = "<h1>Summary:</h1>";
+
+		if (added.length) {
+			summary += `<h3>Added:</h3><pre>${escapeHtml(added.join("\n"))}</pre><br>`;
+		}
+
+		if (unused.length) {
+			summary += `<h3>Unused<sup>(maybe)</sup>:</h3><pre>${escapeHtml(unused.join("\n"))}</pre><br>`;
+		}
+
+		report = summary + report;
 	}
 
 	report = `
@@ -338,6 +372,10 @@ export function htmlReport(info, withPlain = false) {
 					margin-left: .25em;
 				}
 
+				h3 sup {
+					font-size: .7em;
+				}
+
 				pre {
 					color: #000;
 					padding: 1em .5em;
@@ -367,17 +405,21 @@ export function htmlReport(info, withPlain = false) {
  * 
  * @param  {Array<Object>} info
  * @param  {String}        pathToJson
- * @return {Array<Object>}
+ * @return {Object{added:Array<Object>, unused:Array<String>}}
  */
 export function diff(info, pathToJson) {
 
-	var base = require(resolve(process.cwd(), pathToJson));
+	var base = require(resolve(process.cwd(), pathToJson)),
+		strs = [],
+		added, unused;
 
-	return info.filter(({ string }) => {
+	added = info.filter(({ string }) => {
 
 		if (typeof string == "undefined") {
 			return true;
 		}
+
+		strs.push(string);
 
 		if (base.hasOwnProperty(string)) {
 			return false;
@@ -385,4 +427,16 @@ export function diff(info, pathToJson) {
 
 		return true;
 	});
+
+	unused = Object.keys(base).filter((string) => {
+
+		if (~strs.indexOf(string)) {
+			return false;
+		}
+
+		return true;
+
+	});
+
+	return { added, unused };
 }
