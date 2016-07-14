@@ -10,6 +10,7 @@ import 'colour';
 
 const tags = ['__', '__n'];
 const fns  = ['__', '__n', '__mf', '__l', '__h'];
+const fns2 = ['__n'];
 
 const convert = new Convert({
 	fg: '#000',
@@ -154,7 +155,7 @@ export function traverseFile(file, info = []) {
 					}
 				}
 
-				if (typeof second != "undefined") {
+				if (typeof second != "undefined" && ~fns2.indexOf(name)) {
 
 					if (second.type == "StringLiteral") {
 
