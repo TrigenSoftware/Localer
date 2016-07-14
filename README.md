@@ -22,12 +22,16 @@ Generate report for terminal.
 Generate report as html.
 
 
-### Object{added:Array<Object>, unused:Array<String>} diff(Array<Object> info, String pathToJson)
+### Promise<Object{added:Array<Object>, unused:Array<String>}> exclude(Array<String> masks, Array<Object>|Object{added:Array<Object>, unused:Array<String>})
+Exclude locales from info.
+
+
+### Promise<Object{added:Array<Object>, unused:Array<String>}> diff(Array<String> masks, Array<Object> info)
 Show difference info.
 
 
 # Global usage
 
 ```
-localer [...glob patterns] [--html to generate html] [--summary to show list of added and unused locales] [--compare [path to file] to show difference]
+localer [...glob patterns to js source] [--html to generate html] [--summary to show list of added and unused locales] [--compare [...glob patterns to json] to show difference] [--exclude [...glob patterns to json] to exclude locales]
 ```

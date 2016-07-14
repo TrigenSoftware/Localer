@@ -1,44 +1,34 @@
 import Glob    from 'glob';
 import * as Fs from 'fs';
 
-if (!Array.prototype.hasOwnProperty('asyncForEach')) {
-    
-    Object.defineProperty(Array.prototype, 'asyncForEach', {
-        value(callback, resolvedObject) {
+export function asyncForEach(array, callback, resolvedObject) {
 
-            var balancer = 0, i = 0, _this = this;
+    var balancer = 0, i = 0, _this = array;
 
-            return new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
 
-                if (!_this.length) {
-                    return resolve(resolvedObject);
-                }
-
-                callback(_this[i], i++).then(function next() {
-
-                    if (i >= _this.length) {
-                        return resolve(resolvedObject);
-                    }
-
-                    return callback(_this[i], i++).then(next).catch(reject);
-                }).catch(reject); 
-            });
+        if (!_this.length) {
+            return resolve(resolvedObject);
         }
+
+        callback(_this[i], i++).then(function next() {
+
+            if (i >= _this.length) {
+                return resolve(resolvedObject);
+            }
+
+            return callback(_this[i], i++).then(next).catch(reject);
+        }).catch(reject); 
     });
 }
 
-if (!Array.prototype.hasOwnProperty('pushUnique')) {
-    
-    Object.defineProperty(Array.prototype, 'pushUnique', {
-        value(element) {
+export function pushUnique(array, element) {
 
-            if (this.indexOf(element) != -1) {
-                return element;
-            }
+    if (array.indexOf(element) != -1) {
+        return element;
+    }
 
-            return this.push(element);
-        }
-    });
+    return array.push(element);
 }
 
 export function readFile(file) {

@@ -1,4 +1,4 @@
-import { readFile, glob }   from './helpers';
+import { pushUnique, asyncForEach, readFile, glob }   from './helpers';
 import { extname, resolve } from 'path';
 import * as Babylon from 'babylon';
 import Traverse     from 'babel-traverse';
@@ -212,16 +212,116 @@ export function traverseGlob(masks, info = []) {
 		masks = [masks];
 	}
 
-	return masks.asyncForEach(mask => 
+	return asyncForEach(masks, mask => 
 
 		glob(mask).then(files => 
 
-			files.asyncForEach(file => 
+			asyncForEach(files, file => 
 				traverseFile(file, info)
 			)
 		)
 
 	).then(() => Promise.resolve(info));
+}
+
+/**
+ * Exclude locales from info.
+ * 
+ * @param  {Array<String>} masks
+ * @param  {Array<Object>|Object{added:Array<Object>, unused:Array<String>}} info
+ * @return {Promise<Array<Object>|Object{added:Array<Object>, unused:Array<String>}>}
+ */
+export function exclude(masks, info) {
+
+	if (!Array.isArray(masks)) {
+		masks = [masks];
+	}
+
+	var exclude = [];
+
+	return asyncForEach(masks, mask => 
+
+		glob(mask).then(files => 
+
+			files.forEach(file => 
+				exclude.push(...Object.keys(
+					require(resolve(process.cwd(), file))
+				))
+			)
+		)
+
+	).then(() => {
+
+		if (Array.isArray(info)) {
+			return Promise.resolve(
+				info.filter(({string}) => !~exclude.indexOf(string))
+			);
+		}
+
+		return Promise.resolve({
+			added:  info.added.filter(({string}) => !~exclude.indexOf(string)),
+			unused: info.unused.filter(string => !~exclude.indexOf(string))
+		});
+	});
+}
+
+/**
+ * Show difference info.
+ * 
+ * @param  {Array<String>} masks
+ * @param  {Array<Object>} info
+ * @return {Promise<Object{added:Array<Object>, unused:Array<String>}>}
+ */
+export function diff(masks, info) {
+
+	if (!Array.isArray(masks)) {
+		masks = [masks];
+	}
+
+	var base = [],
+		strs = [],
+		added, unused;
+
+	return asyncForEach(masks, mask => 
+
+		glob(mask).then(files => 
+
+			files.forEach(file => 
+				base.push(...Object.keys(
+					require(resolve(process.cwd(), file))
+				))
+			)
+		)
+
+	).then(() => {
+
+		added = info.filter(({ string }) => {
+
+			if (typeof string == "undefined") {
+				return true;
+			}
+
+			strs.push(string);
+
+			if (~base.indexOf(string)) {
+				return false;
+			}
+
+			return true;
+		});
+
+		unused = base.filter((string) => {
+
+			if (~strs.indexOf(string)) {
+				return false;
+			}
+
+			return true;
+
+		});
+
+		return Promise.resolve({ added, unused });
+	});
 }
 
 /**
@@ -255,7 +355,7 @@ export function terminalReport(info, withSummary = false) {
 			report += `${'String:'.yellow} ${string.green}\n\n`;
 
 			if (withSummary) {
-				added.pushUnique(string);
+				pushUnique(added, string);
 			}
 
 		} else {
@@ -274,7 +374,7 @@ export function terminalReport(info, withSummary = false) {
 		}
 
 		if (unused.length) {
-			summary += `Unused:\n\n${unused.join("\n")}\n\n`;
+			summary += `Unused (maybe):\n\n${unused.join("\n")}\n\n`;
 		}
 
 		report = summary + report;
@@ -314,7 +414,7 @@ export function htmlReport(info, withSummary = false) {
 			report += `<h3>String:&nbsp;<span>${string}</span></h2>`;
 
 			if (withSummary) {
-				added.pushUnique(string);
+				pushUnique(added, string);
 			}
 
 		} else {
@@ -398,45 +498,4 @@ export function htmlReport(info, withSummary = false) {
 	</html>`;
 
 	return report;
-}
-
-/**
- * Show difference info.
- * 
- * @param  {Array<Object>} info
- * @param  {String}        pathToJson
- * @return {Object{added:Array<Object>, unused:Array<String>}}
- */
-export function diff(info, pathToJson) {
-
-	var base = require(resolve(process.cwd(), pathToJson)),
-		strs = [],
-		added, unused;
-
-	added = info.filter(({ string }) => {
-
-		if (typeof string == "undefined") {
-			return true;
-		}
-
-		strs.push(string);
-
-		if (base.hasOwnProperty(string)) {
-			return false;
-		}
-
-		return true;
-	});
-
-	unused = Object.keys(base).filter((string) => {
-
-		if (~strs.indexOf(string)) {
-			return false;
-		}
-
-		return true;
-
-	});
-
-	return { added, unused };
 }
