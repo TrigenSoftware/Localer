@@ -1,103 +1,229 @@
-import { pushUnique, asyncForEach, readFile, glob }   from './helpers';
-import { extname, resolve } from 'path';
+import { pushUnique, asyncForEach, readFile, glob } from './helpers';
 import * as Babylon from 'babylon';
 import Traverse     from 'babel-traverse';
 import CodeFrame    from 'babel-code-frame';
-import transformers from './transformers';
 import Convert      from 'ansi-to-html';
 import escapeHtml   from 'escape-html';
+import Path         from 'path';
+import 'babel-polyfill';
 import 'colour';
 
-const tags = ['__', '__n'];
-const fns  = ['__', '__n', '__mf', '__l', '__h'];
-const fns2 = ['__n'];
-
-const convert = new Convert({
-	fg: '#000',
-	bg: '#FFF'
-});
-
-const code_frame_options = {
+const codeFrameOptions = {
 	highlightCode: true
 };
 
-const babylon_options = {
-	sourceType: "module",
-	plugins: [
-		"jsx",
-		// "flow",
-		"asyncFunctions",
-		"classConstructorCall",
-		"doExpressions",
-		"trailingFunctionCommas",
-		"objectRestSpread",
-		"decorators",
-		"classProperties",
-		"exportExtensions",
-		"exponentiationOperator",
-		"asyncGenerators",
-		"functionBind",
-		"functionSent"
-	]
-};
+export default class Locales {
 
-function getPosition(code, start) {
+	/**
+	 * Tagged literals.
+	 * @type {Array<String>}
+	 */
+	tags = ['__', '__n'];
 
-	var line = 1;
+	/**
+	 * Functions with one argument.
+	 * @type {Array<String>}
+	 */
+	fns  = ['__', '__n', '__mf', '__l', '__h'];
+	
+	/**
+	 * Functions with few argument.
+	 * @type {Array<String>}
+	 */
+	fns2 = ['__n'];
+	
+	/**
+	 * ANSI to HTML instance.
+	 * @type {Convert}
+	 */
+	convert = new Convert({
+		fg: '#000',
+		bg: '#FFF'
+	});
+	
+	/**
+	 * Babylon parser options.
+	 * @type {Object}
+	 */
+	babylonOptions = {
+		sourceType: "module",
+		plugins: [
+			"jsx",
+			// "flow",
+			"asyncFunctions",
+			"classConstructorCall",
+			"doExpressions",
+			"trailingFunctionCommas",
+			"objectRestSpread",
+			"decorators",
+			"classProperties",
+			"exportExtensions",
+			"exponentiationOperator",
+			"asyncGenerators",
+			"functionBind",
+			"functionSent"
+		]
+	};
+	
+	/**
+	 * Code transformers.
+	 * @type {Array<Function>}
+	 */
+	transformers = [];
+	
+	/**
+	 * Locales soruces.
+	 * @type {Array<LocaleSources>}
+	 */
+	locales = [];
+	
+	/**
+	 * Unused locales.
+	 * @type {Array<String>}
+	 */
+	unused = [];
 
-	for (var i = 0, col = 0, ch = code[0], len = code.length; i < len; ch = code[++i], ++col) {
+	/**
+	 * Locales constructor.
+	 * 
+	 * @param  {Array<LocaleSource>|Locales}  fromLocalesOrLocales
+	 * @param  {Array<String>}                fromUnused
+	 * @return {Locales}
+	 */
+	constructor(fromLocalesOrLocales = [], fromUnused = []) {
 
-		if (ch == "\n") {
-			line++;
-			col = 0;
+		if (fromLocalesOrLocales instanceof Locales) {
+			this.from(fromLocalesOrLocales);
+			return;
 		}
 
-		if (i == start) {
-			return { line, col };
+		if (!Array.isArray(fromLocalesOrLocales) || !Array.isArray(fromUnused)) {
+			throw new Error('Invalid arguments.');
 		}
+
+		let fromLocales = fromLocalesOrLocales,
+			{ locales, unused } = this;
+
+		fromLocales.forEach((localeSource) => {
+
+			if (!(localeSource instanceof LocaleSource)) {
+				throw new Error('Invalid locale source.');
+			}
+
+			locales.push(localeSource.copy());
+		});
+
+		fromUnused.forEach((localeString) => {
+
+			if (typeof localeString != 'string') {
+				throw new Error('Invalid locale string.');
+			}
+
+			unused.push(localeString);
+		});
 	}
 
-	return {};
-}
+	/**
+	 * Import data from other instance.
+	 * 
+	 * @param {Locales} locales
+	 */
+	from(locales) {
 
-/**
- * Collect locales from file.
- * 
- * @param  {String} file 
- * @param  {Array}  info
- * @return {Array<Object>}
- */
-export function traverseFile(file, info = []) {
-	return readFile(file).then((code) => {
+		if (!(locales instanceof Locales)) {
+			throw new Error('Invalid locales.');
+		}
 
-		var ext = extname(file);
+		this.convert = locales.convert;
 
-		code = transformers.reduce((code, transform) => transform(code, ext), code);
+		this.tags         = locales.tags.slice();
+		this.fns          = locales.fns.slice();
+		this.fns2         = locales.fns2.slice();
+		this.transformers = locales.transformers.slice();
 
-		Traverse(Babylon.parse(code, babylon_options), {
+		this.babylonOptions = {
+			...locales.babylonOptions,
+			plugins: locales.babylonOptions.plugins.slice()
+		};
+
+		this.locales = [];
+		locales.locales.forEach((localeSource) => {
+
+			if (!(localeSource instanceof LocaleSource)) {
+				throw new Error('Invalid locale source.');
+			}
+
+			this.locales.push(localeSource.copy());
+		});
+
+		this.unused = [];
+		locales.unused.forEach((localeString) => {
+
+			if (typeof localeString != 'string') {
+				throw new Error('Invalid locale string.');
+			}
+
+			this.unused.push(localeString);
+		});
+	}
+
+	/**
+	 * Create copy of this.
+	 * 
+	 * @return {Locales}
+	 */
+	copy() {
+		return new Locales(this);
+	}
+
+	/**
+	 * Collect locales from source code.
+	 * 
+	 * @param  {String} code
+	 * @param  {String} file
+	 * @return {this}
+	 */
+	fromCode(sourceCode, file) {
+
+		if (typeof sourceCode != 'string') {
+			throw new Error('Invalid arguments.');
+		}
+
+		let extname = '.js';
+
+		if (typeof file == 'string') {
+			extname = Path.extname(file);
+		}
+
+		let { tags, fns, fns2, transformers, babylonOptions, locales } = this;
+
+		let code = transformers.reduce((code, transform) => 
+			transform(code, extname), 
+			sourceCode
+		);
+
+		Traverse(Babylon.parse(code, babylonOptions), {
 
 			TaggedTemplateExpression(path) {
 
-				var { node } = path;
+				let { node } = path;
 
 				if (!~tags.indexOf(node.tag.name)) {
 					return;
 				}
 
-				var position = getPosition(code, node.start);
-
-				info.push({
-					string:    node.quasi.quasis.map(node => node.value.raw).join('%s'),
-					fn:        node.tag.name,
-					type:      "TaggedTemplateExpression",
-					codeFrame: CodeFrame(code, position.line, position.col, code_frame_options),
-					file, ...position
-				});
+				locales.push(new LocaleSource(
+					file, 
+					code, 
+					node, 
+					node.tag.name, 
+					node.quasi.quasis.map(node => node.value.raw).join('%s')
+				));
 			},
 
 			CallExpression(path) {
 
-				var { node }   = path,
+				let { node }   = path,
 					{ callee } = node,
 					name;
 
@@ -114,44 +240,38 @@ export function traverseFile(file, info = []) {
 					return;
 				}
 
-				var { arguments: [first, second] } = node;
+				let { arguments: [first, second] } = node;
 
 				if (typeof first != "undefined") {
 
 					if (first.type == "StringLiteral") {
 
-						var position = getPosition(code, node.start);
-
-						info.push({
-							string:    first.value,
-							fn:        name,
-							type:      "CallExpression",
-							codeFrame: CodeFrame(code, position.line, position.col, code_frame_options),
-							file, ...position
-						});
+						locales.push(new LocaleSource(
+							file, 
+							code, 
+							node, 
+							name, 
+							first.value
+						));
 
 					} else 
 					if (first.type == "TemplateLiteral") {
 
-						var position = getPosition(code, node.start);
-
-						info.push({
-							string:    first.quasis.map(node => node.value.raw).join('%s'),
-							fn:        name,
-							type:      "CallExpression",
-							codeFrame: CodeFrame(code, position.line, position.col, code_frame_options),
-							file, ...position
-						});
+						locales.push(new LocaleSource(
+							file, 
+							code, 
+							node, 
+							name
+							// first.quasis.map(node => node.value.raw).join('%s')
+						));
 					} else {
 
-						var position = getPosition(code, node.start);
-						
-						info.push({
-							fn:        name,
-							type:      "CallExpression",
-							codeFrame: CodeFrame(code, position.line, position.col, code_frame_options),
-							file, ...position
-						});
+						locales.push(new LocaleSource(
+							file, 
+							code, 
+							node, 
+							name
+						));
 					}
 				}
 
@@ -159,344 +279,525 @@ export function traverseFile(file, info = []) {
 
 					if (second.type == "StringLiteral") {
 
-						var position = getPosition(code, node.start);
-
-						info.push({
-							string:    second.value,
-							fn:        name,
-							type:      "CallExpression",
-							codeFrame: CodeFrame(code, position.line, position.col, code_frame_options),
-							file, ...position
-						});
+						locales.push(new LocaleSource(
+							file, 
+							code, 
+							node, 
+							name, 
+							second.value
+						));
 
 					} else 
 					if (second.type == "TemplateLiteral") {
 
-						var position = getPosition(code, node.start);
-
-						info.push({
-							string:    second.quasis.map(node => node.value.raw).join('%s'),
-							fn:        name,
-							type:      "CallExpression",
-							codeFrame: CodeFrame(code, position.line, position.col, code_frame_options),
-							file, ...position
-						});
+						locales.push(new LocaleSource(
+							file, 
+							code, 
+							node, 
+							name 
+							// second.quasis.map(node => node.value.raw).join('%s')
+						));
 					} else {
 
-						var position = getPosition(code, node.start);
-						
-						info.push({
-							fn:        name,
-							type:      "CallExpression",
-							codeFrame: CodeFrame(code, position.line, position.col, code_frame_options),
-							file, ...position
-						});
+						locales.push(new LocaleSource(
+							file, 
+							code, 
+							node, 
+							name
+						));
 					}
 				}
 			}
 		});
 
-		return Promise.resolve(info);
-	});
-}
-
-/**
- * Collect locales from files by glob pattern.
- * 
- * @param  {Array<String>} masks
- * @param  {Array}  info
- * @return {Array<Object>}
- */
-export function traverseGlob(masks, info = []) {
-
-	if (!Array.isArray(masks)) {
-		masks = [masks];
+		return this;
 	}
 
-	return asyncForEach(masks, mask => 
+	/**
+	 * Collect locales from JavaScript source files by glob pattern.
+	 * 
+	 * @param  {String|Array<String>} maskOrMasks
+	 * @return {Promise<this>}
+	 */
+	async fromFiles(maskOrMasks) {
 
-		glob(mask).then(files => 
+		let masks;
 
-			asyncForEach(files, file => 
-				traverseFile(file, info)
-			)
-		)
-
-	).then(() => Promise.resolve(info));
-}
-
-/**
- * Exclude locales from info.
- * 
- * @param  {Array<String>} masks
- * @param  {Array<Object>|Object{added:Array<Object>, unused:Array<String>}} info
- * @return {Promise<Array<Object>|Object{added:Array<Object>, unused:Array<String>}>}
- */
-export function exclude(masks, info) {
-
-	if (!Array.isArray(masks)) {
-		masks = [masks];
-	}
-
-	var exclude = [];
-
-	return asyncForEach(masks, mask => 
-
-		glob(mask).then(files => 
-
-			files.forEach(file => 
-				exclude.push(...Object.keys(
-					require(resolve(process.cwd(), file))
-				))
-			)
-		)
-
-	).then(() => {
-
-		if (Array.isArray(info)) {
-			return Promise.resolve(
-				info.filter(({string}) => !~exclude.indexOf(string))
-			);
+		if (typeof maskOrMasks == 'string') {
+			masks = [maskOrMasks];
+		} else
+		if (Array.isArray(maskOrMasks)) {
+			masks = maskOrMasks;
+		} else {
+			throw new Error('Invalid arguments.');
 		}
 
-		return Promise.resolve({
-			added:  info.added.filter(({string}) => !~exclude.indexOf(string)),
-			unused: info.unused.filter(string => !~exclude.indexOf(string))
+		await asyncForEach(masks, async (mask) => { 
+
+			let files = await glob(mask);
+			
+			await asyncForEach(files, async (file) => 
+				this.fromCode(
+					await readFile(file),
+					file
+				)
+			);
 		});
-	});
-}
 
-/**
- * Show difference info.
- * 
- * @param  {Array<String>} masks
- * @param  {Array<Object>} info
- * @return {Promise<Object{added:Array<Object>, unused:Array<String>}>}
- */
-export function diff(masks, info) {
-
-	if (!Array.isArray(masks)) {
-		masks = [masks];
+		return this;
 	}
 
-	var base = [],
-		strs = [],
-		added, unused;
+	/**
+	 * Exclude given locales from `locales` and `unused`.
+	 * 
+	 * @param  {Array<String|LocaleSource>|Object<String,any>} arrayOrObjectToExlcude
+	 * @return {this}
+	 */
+	exclude(arrayOrObjectToExlcude) {
 
-	return asyncForEach(masks, mask => 
+		let exclude = [];
 
-		glob(mask).then(files => 
+		if (Array.isArray(arrayOrObjectToExlcude)) {
+			exclude = arrayOrObjectToExlcude
+				.map((locale) => {
+
+					if (locale instanceof LocaleSource) {
+						return locale.string;
+					} else 
+					if (typeof locale == 'string') {
+						return locale;
+					} else {
+						throw new Error('Invalid locale to exclude.')
+					}
+				});
+		} else
+		if (typeof arrayOrObjectToExlcude == 'object' && arrayOrObjectToExlcude != null) {
+			exclude = Object.keys(arrayOrObjectToExlcude);
+		} else {
+			throw new Error('Invalid arguments.');
+		}
+
+		this.locales = this.locales.filter(({string}) => 
+			!~exclude.indexOf(string)
+		);
+
+		this.unused = this.unused.filter(string => 
+			!~exclude.indexOf(string)
+		);
+
+		return this;
+	}
+
+	/**
+	 * Exclude locales getted from JSON files from `locales` and `unused`.
+	 * 
+	 * @param  {String|Array<String>} maskOrMasks
+	 * @return {Promise<this>}
+	 */
+	async excludeFiles(maskOrMasks) {
+
+		let cwd = process.cwd(),
+			masks;
+
+		if (typeof maskOrMasks == 'string') {
+			masks = [maskOrMasks];
+		} else
+		if (Array.isArray(maskOrMasks)) {
+			masks = maskOrMasks;
+		} else {
+			throw new Error('Invalid arguments.');
+		}
+
+		await asyncForEach(masks, async (mask) => {
+
+			let files = await glob(mask);
 
 			files.forEach(file => 
-				base.push(...Object.keys(
-					require(resolve(process.cwd(), file))
-				))
-			)
-		)
+				this.exclude(
+					require(Path.resolve(cwd, file))
+				)
+			);
+		});
 
-	).then(() => {
+		return this;
+	}
 
-		added = info.filter(({ string }) => {
+	/**
+	 * Get difference between locales parsed from JavaScript sources and locales.
+	 * 
+	 * @param  {Array<String|LocaleSource>|Object<String,any>} arrayOrObjectBase
+	 * @return {Locales}
+	 */
+	diff(arrayOrObjectBase) {
+
+		let base = [];
+
+		if (Array.isArray(arrayOrObjectBase)) {
+			base = arrayOrObjectBase
+				.map((locale) => {
+
+					if (locale instanceof LocaleSource) {
+						return locale.string;
+					} else 
+					if (typeof locale == 'string') {
+						return locale;
+					} else {
+						throw new Error('Invalid locale to exclude.')
+					}
+				});
+		} else
+		if (typeof arrayOrObjectBase == 'object' && arrayOrObjectBase != null) {
+			base = Object.keys(arrayOrObjectBase);
+		} else {
+			throw new Error('Invalid arguments.');
+		}
+
+		let compareResult = new Locales(this),
+			usedStrings   = [];
+
+		compareResult.locales = compareResult.locales.filter(({ string }) => {
 
 			if (typeof string == "undefined") {
 				return true;
 			}
 
-			strs.push(string);
+			usedStrings.push(string);
 
-			if (~base.indexOf(string)) {
-				return false;
-			}
-
-			return true;
+			return !~base.indexOf(string);
 		});
 
-		unused = base.filter((string) => {
+		compareResult.unused = base.filter((string) => 
+			!~usedStrings.indexOf(string)
+		);
 
-			if (~strs.indexOf(string)) {
-				return false;
-			}
+		return compareResult;
+	}
 
-			return true;
+	/**
+	 * Get difference between locales parsed from JavaScript sources and locales from JSON files.
+	 * 
+	 * @param  {String|Array<String>} maskOrMasks
+	 * @return {Promise<Locales>}
+	 */
+	async diffFiles(maskOrMasks) {
 
+		let cwd = process.cwd(),
+			masks;
+
+		if (typeof maskOrMasks == 'string') {
+			masks = [maskOrMasks];
+		} else
+		if (Array.isArray(maskOrMasks)) {
+			masks = maskOrMasks;
+		} else {
+			throw new Error('Invalid arguments.');
+		}
+
+		let base = [];
+
+		await asyncForEach(masks, async (mask) => {
+
+			let files = await glob(mask);
+
+			files.forEach(file => {
+
+				let json = require(Path.resolve(cwd, file));
+
+				if (Array.isArray(json)) {
+					base.push(...json);
+				} else {
+					base.push(...Object.keys(json));
+				}
+			});
 		});
 
-		return Promise.resolve({ added, unused });
-	});
-}
-
-/**
- * Generate report for terminal.
- * 
- * @param  {Array<Object>|Object{added:Array<Object>, unused:Array<String>}} info
- * @param  {Boolean} withSummary
- * @return {String} 
- */
-export function terminalReport(info, withSummary = false) {
-
-	var report      = "", 
-		currentFile = "",
-		added       = [],
-		unused      = [];
-
-	if (!Array.isArray(info)) {
-		unused  = info.unused;
-		info    = info.added;
+		return this.diff(base);
 	}
 
-	info.forEach(({ file, string, fn, codeFrame }) => {
+	/**
+	 * Generate report for terminal.
+	 * 
+	 * @param  {Boolean} withSummary
+	 * @return {String} 
+	 */
+	terminalReport(withSummary = false) {
 
-		if (currentFile != file) {
-			currentFile = file;
-			report += `\n${'File:'.yellow} ${file.underline.cyan}\n\n`;
-		}
+		let { locales, unused } = this,
+			added       = [],
+			report      = "", 
+			currentFile = "";
 
-		if (typeof string == "string") {
+		locales.forEach(({ file, string, fn, codeFrame }) => {
 
-			report += `${'String:'.yellow} ${string.green}\n\n`;
-
-			if (withSummary) {
-				pushUnique(added, string);
+			if (currentFile != file) {
+				currentFile = file;
+				report += `\n${'File:'.yellow} ${file.underline.cyan}\n\n`;
 			}
 
-		} else {
-			report += `${'Function:'.yellow} ${fn.green}\n\n`;
-		}
+			if (typeof string == "string") {
 
-		report += `${codeFrame}\n\n`;
-	});
+				report += `${'String:'.yellow} ${string.green}\n\n`;
 
-	if (withSummary && (added.length || unused.length)) {
+				if (withSummary) {
+					pushUnique(added, string);
+				}
 
-		var summary = "\nSummary:\n\n";
-
-		if (added.length) {
-			summary += `Added:\n\n${added.join("\n")}\n\n`;
-		}
-
-		if (unused.length) {
-			summary += `Unused (maybe):\n\n${unused.join("\n")}\n\n`;
-		}
-
-		report = summary + report;
-	}
-
-	return report;
-}
-
-/**
- * Generate report as html.
- * 
- * @param  {Array<Object>|Object{added:Array<Object>, unused:Array<String>}} info
- * @param  {Boolean} withSummary
- * @return {String} 
- */
-export function htmlReport(info, withSummary = false) {
-
-	var report      = "",
-		currentFile = "",
-		added       = [],
-		unused     = [];
-
-	if (!Array.isArray(info)) {
-		unused = info.unused;
-		info    = info.added;
-	}
-
-	info.forEach(({ file, string, fn, codeFrame }) => {
-
-		if (currentFile != file) {
-			currentFile = file;
-			report += `<br><h1>File:&nbsp;<span>${file}</span></h1>`;
-		}
-
-		if (typeof string == "string") {
-
-			report += `<h3>String:&nbsp;<span>${string}</span></h2>`;
-
-			if (withSummary) {
-				pushUnique(added, string);
+			} else {
+				report += `${'Function:'.yellow} ${fn.green}\n\n`;
 			}
 
-		} else {
-			report += `<h3>Function:&nbsp;<span>${fn}</span></h2>`;
+			report += `${codeFrame}\n\n`;
+		});
+
+		if (withSummary && (added.length || unused.length)) {
+
+			let summary = "\nSummary:\n\n";
+
+			if (added.length) {
+				summary += `Added:\n\n${added.join("\n")}\n\n`;
+			}
+
+			if (unused.length) {
+				summary += `Unused (maybe):\n\n${unused.join("\n")}\n\n`;
+			}
+
+			report = summary + report;
 		}
 
-		report += `<pre>${escapeHtml(codeFrame.replace(/\t/g, "    "))}</pre>`;
-		report += `<small>${file}</small><br>`;
-	});
-
-	if (withSummary && (added.length || unused.length)) {
-
-		var summary = "<h1>Summary:</h1>";
-
-		if (added.length) {
-			summary += `<h3>Added:</h3><pre>${escapeHtml(added.join("\n"))}</pre><br>`;
-		}
-
-		if (unused.length) {
-			summary += `<h3>Unused<sup>(maybe)</sup>:</h3><pre>${escapeHtml(unused.join("\n"))}</pre><br>`;
-		}
-
-		report = summary + report;
+		return report;
 	}
 
-	report = `
-	<!DOCTYPE html>
-	<html>
-	    <head>
-	        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	        <title>REPORT</title>
-	        <style>
+	/**
+	 * Generate report as html.
+	 * 
+	 * @param  {Boolean} withSummary
+	 * @return {String} 
+	 */
+	htmlReport(withSummary = false) {
 
-				body {
-					font-family: Arial, Calibri;
-					overflow-x: hidden;
+		let { locales, unused } = this,
+			added       = [],
+			report      = "",
+			currentFile = "";
+
+		locales.forEach(({ file, string, fn, codeFrame }) => {
+
+			if (currentFile != file) {
+				currentFile = file;
+				report += `<br><h1>File:&nbsp;<span>${file}</span></h1>`;
+			}
+
+			if (typeof string == "string") {
+
+				report += `<h3>String:&nbsp;<span>${string}</span></h2>`;
+
+				if (withSummary) {
+					pushUnique(added, string);
 				}
 
-				h1 {
-					font-size: 1.5em;
-				}
+			} else {
+				report += `<h3>Function:&nbsp;<span>${fn}</span></h2>`;
+			}
 
-				h1 span {
-					font-family: monospace;
-					font-size: 1.4em;
-					font-weight: normal;
-					margin-left: .25em;
-					text-decoration: underline;
-				}
+			report += `<pre>${escapeHtml(codeFrame.replace(/\t/g, "    "))}</pre>`;
+			report += `<small>${file}</small><br>`;
+		});
 
-				h3 span {
-					font-family: monospace;
-					font-size: 1.45em;
-					font-weight: normal;
-					margin-left: .25em;
-				}
+		if (withSummary && (added.length || unused.length)) {
 
-				h3 sup {
-					font-size: .7em;
-				}
+			let summary = "<h1>Summary:</h1>";
 
-				pre {
-					color: #000;
-					padding: 1em .5em;
-					border: 1px solid #000;
-				}
+			if (added.length) {
+				summary += `<h3>Added:</h3><pre>${escapeHtml(added.join("\n"))}</pre><br>`;
+			}
 
-				pre b {
-					font-weight: normal;
-				}
+			if (unused.length) {
+				summary += `<h3>Unused<sup>(maybe)</sup>:</h3><pre>${escapeHtml(unused.join("\n"))}</pre><br>`;
+			}
 
-				small {
-					font-family: monospace;
-				}
+			report = summary + report;
+		}
 
-			</style>
-		</head>
-		<body>
-			${convert.toHtml(report)}
-		</body>
-	</html>`;
+		report = `
+		<!DOCTYPE html>
+		<html>
+		    <head>
+		        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		        <title>REPORT</title>
+		        <style>
 
-	return report;
+					body {
+						font-family: Arial, Calibri;
+						overflow-x: hidden;
+					}
+
+					h1 {
+						font-size: 1.5em;
+					}
+
+					h1 span {
+						font-family: monospace;
+						font-size: 1.4em;
+						font-weight: normal;
+						margin-left: .25em;
+						text-decoration: underline;
+					}
+
+					h3 span {
+						font-family: monospace;
+						font-size: 1.45em;
+						font-weight: normal;
+						margin-left: .25em;
+					}
+
+					h3 sup {
+						font-size: .7em;
+					}
+
+					pre {
+						color: #000;
+						padding: 1em .5em;
+						border: 1px solid #000;
+					}
+
+					pre b {
+						font-weight: normal;
+					}
+
+					small {
+						font-family: monospace;
+					}
+
+				</style>
+			</head>
+			<body>
+				${convert.toHtml(report)}
+			</body>
+		</html>`;
+
+		return report;
+	}
+}
+
+export class LocaleSource {
+
+	/**
+	 * Path to file.
+	 * @type {String}
+	 */
+	file      = null;
+
+	/**
+	 * Type of node.
+	 * @type {String}
+	 */
+	type      = null;
+
+	/**
+	 * Line of token.
+	 * @type {Number}
+	 */
+	line      = null;
+
+	/**
+	 * Column of token.
+	 * @type {Number}
+	 */
+	column    = null;
+
+	/**
+	 * Function name.
+	 * @type {String}
+	 */
+	fn        = null;
+
+	/**
+	 * Locale string.
+	 * @type {String}
+	 */
+	string    = null;
+
+	/**
+	 * Code frame.
+	 * @type {String}
+	 */
+	codeFrame = null;
+
+	/**
+	 * LocaleSource constructor.
+	 * 
+	 * @param  {String|LocaleSource} fileOrLocaleSource
+	 * @param  {String}              code
+	 * @param  {Node}                node
+	 * @param  {String}              fn
+	 * @param  {String}              string
+	 * @return {LocaleSource}
+	 */
+	constructor(fileOrLocaleSource, code, node, fn, string) {
+
+		if (fileOrLocaleSource instanceof LocaleSource) {
+			this.from(fileOrLocaleSource);
+			return;
+		}
+
+		let file = fileOrLocaleSource;
+
+		if (typeof file != 'string' && typeof file != 'undefined') {
+			throw new Error('File path must be a string');
+		}
+
+		if (typeof code != 'string') {
+			throw new Error('Code must be setted');
+		}
+
+		if (typeof node != 'object' || typeof node.type != 'string') {
+			throw new Error('Node be setted');
+		}
+
+		if (typeof fn != 'string') {
+			throw new Error('Function name must be setted');
+		}
+
+		if (typeof string != 'string' && typeof string != 'undefined') {
+			throw new Error('Locale string must be setted');
+		}
+
+		this.file   = file;
+		this.type   = node.type;
+		this.line   = node.loc.start.line;
+		this.column = node.loc.start.column + 1;
+		this.fn     = fn;
+		this.string = string;
+
+		this.codeFrame = CodeFrame(code, this.line, this.column, codeFrameOptions);
+	}
+
+	/**
+	 * Import data from other instance.
+	 * 
+	 * @param {LocaleSource} localeSource
+	 */
+	from(localeSource) {
+
+		if (!(localeSource instanceof LocaleSource)) {
+			throw new Error('Invalid locale source.');
+		}
+
+		this.file      = localeSource.file;
+		this.type      = localeSource.type;
+		this.line      = localeSource.line;
+		this.column    = localeSource.column;
+		this.fn        = localeSource.fn;
+		this.string    = localeSource.string;
+		this.codeFrame = localeSource.codeFrame;
+	}
+
+	/**
+	 * Create copy of this.
+	 * 
+	 * @return {LocaleSource}
+	 */
+	copy() {
+		return new LocaleSource(this);
+	}
 }

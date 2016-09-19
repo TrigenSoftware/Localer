@@ -1,9 +1,9 @@
-import Glob    from 'glob';
-import * as Fs from 'fs';
+import Glob from 'glob';
+import Fs   from 'fs';
 
 export function asyncForEach(array, callback, resolvedObject) {
 
-    var balancer = 0, i = 0, _this = array;
+    let balancer = 0, i = 0, _this = array;
 
     return new Promise((resolve, reject) => {
 

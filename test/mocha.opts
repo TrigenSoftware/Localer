@@ -1,0 +1,2 @@
+--timeout 1s
+--compilers js:babel-register
