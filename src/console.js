@@ -2,7 +2,7 @@ import * as Argue from 'argue-cli';
 import Locales    from './lib';
 import rc         from 'rc';
 
-let { exclude, compare, summary, html } = Argue.options([
+let sources, { exclude, compare, summary, html } = Argue.options([
 	"summary", "html"
 ], [
 	["exclude"],
@@ -10,12 +10,14 @@ let { exclude, compare, summary, html } = Argue.options([
 ]);
 
 const rcConfigs = rc('localer', {
+	sources: [],
 	exclude: [],
 	compare: [],
 	summary: false,
 	html:    false
 });
 
+sources = Argue.argv.length ? Argue.argv : rcConfigs.sources;
 exclude = Array.isArray(exclude) && exclude.length ? exclude : rcConfigs.exclude;
 compare = Array.isArray(compare) && compare.length ? compare : rcConfigs.compare;
 summary = summary || rcConfigs.summary;
@@ -28,7 +30,7 @@ async function main() {
 
 		let locales = new Locales();
 
-		await locales.fromFiles(Argue.argv);
+		await locales.fromFiles(sources);
 
 		if (compare) {
 			locales = await locales.diffFiles(compare);

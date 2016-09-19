@@ -59,6 +59,18 @@ String: Without translation
 
 ```
 
+Also you can create `.localerrc` file and define default parameters. Defaults:
+
+```js
+{
+	sources: [],
+	exclude: [],
+	compare: [],
+	summary: false,
+	html:    false
+}
+```
+
 
 # API
 
