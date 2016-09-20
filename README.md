@@ -40,13 +40,11 @@ you'll get:
 
 Summary:
 
-	Added:
+    Added:
+        Without translation
 
-		Without translation
-
-	Unused (maybe):
-
-		Unused translation
+    Unused (maybe):
+        Unused translation
 
 
 File: main.js

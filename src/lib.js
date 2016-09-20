@@ -558,11 +558,11 @@ export default class Locales {
 			let summary = "\nSummary:\n\n".yellow;
 
 			if (added.length) {
-				summary += `\t${'Added:'.yellow}\n\n\t\t${added.join("\n\t\t")}\n\n`;
+				summary += `    ${'Added:'.yellow}\n        ${added.join("\n        ")}\n\n`;
 			}
 
 			if (unused.length) {
-				summary += `\t${'Unused (maybe):'.yellow}\n\n\t\t${unused.join("\n\t\t")}\n\n`;
+				summary += `    ${'Unused (maybe):'.yellow}\n        ${unused.join("\n        ")}\n\n`;
 			}
 
 			report = summary + report;
