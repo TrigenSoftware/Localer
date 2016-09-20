@@ -3,6 +3,9 @@
   "version": "2.0.0",
   "description": "Locales collector from js sources.",
   "main": "lib/lib.js",
+  "bin": {
+    "localer": "./lib/bin.js"
+  },
   "scripts": {
     "test": "mocha -b test/locales.js",
     "compile": "babel ./src -d ./lib",
@@ -53,8 +56,5 @@
     "plugins": [
       "add-module-exports"
     ]
-  },
-  "bin": {
-    "localer": "./lib/bin.js"
   }
 }
