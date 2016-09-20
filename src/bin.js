@@ -6,8 +6,8 @@ import Locales    from './lib';
 import FindRc     from 'find-rc';
 
 let sources, transformers,
-	{ exclude, compare, summary, html } = Argue.options([
-		"summary", "html"
+	{ exclude, compare, summary, html, strings } = Argue.options([
+		"summary", "html", "strings"
 	], [
 		["exclude"],
 		["compare"]
@@ -20,7 +20,8 @@ const rcConfigs = {
 	exclude:      [],
 	compare:      [],
 	summary:      false,
-	html:         false
+	html:         false,
+	strings:      false
 };
 
 if (rcPath) {
@@ -34,6 +35,7 @@ exclude = Array.isArray(exclude) && exclude.length ? exclude : rcConfigs.exclude
 compare = Array.isArray(compare) && compare.length ? compare : rcConfigs.compare;
 summary = summary || rcConfigs.summary;
 html    = html    || rcConfigs.html;
+strings = strings || rcConfigs.strings;
 
 main();
 function main() {
@@ -61,9 +63,9 @@ function main() {
 	.then((locales) => {
 
 		if (html) {
-			console.log(locales.htmlReport(summary));
+			console.log(locales.htmlReport(summary, strings));
 		} else {
-			console.log(locales.terminalReport(summary));
+			console.log(locales.terminalReport(summary, strings));
 		}
 
 		process.exit(Number(Boolean(compare && locales.locales.length)));
