@@ -10,7 +10,7 @@ let sources, transformers,
 		["compare"]
 	]);
 
-const rcPath    = FindRc('localer'),
+const rcPath    = FindRc('localer');
 const rcConfigs = {
 	sources:      [],
 	transformers: [],
