@@ -33,8 +33,8 @@
     "babylon": "^6.9.2",
     "colour": "^0.7.1",
     "escape-html": "^1.0.3",
-    "glob": "^7.0.5",
-    "rc": "^1.1.6"
+    "find-rc": "^3.0.1",
+    "glob": "^7.0.5"
   },
   "devDependencies": {
     "babel-cli": "^6.14.0",
