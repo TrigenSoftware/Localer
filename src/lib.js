@@ -552,14 +552,14 @@ export default class Locales {
 
 		if (withSummary && (added.length || unused.length)) {
 
-			let summary = "\nSummary:\n\n";
+			let summary = "\nSummary:\n\n".yellow;
 
 			if (added.length) {
-				summary += `\tAdded:\n\n\t\t${added.join("\n\t\t")}\n\n`;
+				summary += `\t${'Added:'.yellow}\n\n\t\t${added.join("\n\t\t")}\n\n`;
 			}
 
 			if (unused.length) {
-				summary += `\tUnused (maybe):\n\n\t\t${unused.join("\n\t\t")}\n\n`;
+				summary += `\t${'Unused (maybe):'.yellow}\n\n\t\t${unused.join("\n\t\t")}\n\n`;
 			}
 
 			report = summary + report;
