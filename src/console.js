@@ -1,23 +1,32 @@
 import * as Argue from 'argue-cli';
 import Locales    from './lib';
-import rc         from 'rc';
+import FindRc     from 'find-rc';
 
-let sources, { exclude, compare, summary, html } = Argue.options([
-	"summary", "html"
-], [
-	["exclude"],
-	["compare"]
-]);
+let sources, transformers,
+	{ exclude, compare, summary, html } = Argue.options([
+		"summary", "html"
+	], [
+		["exclude"],
+		["compare"]
+	]);
 
-const rcConfigs = rc('localer', {
-	sources: [],
-	exclude: [],
-	compare: [],
-	summary: false,
-	html:    false
-});
+const rcPath    = FindRc('localer'),
+const rcConfigs = {
+	sources:      [],
+	transformers: [],
+	exclude:      [],
+	compare:      [],
+	summary:      false,
+	html:         false
+};
+
+if (rcPath) {
+	Object.assign(rcConfigs, require(rcPath));
+}
 
 sources = Argue.argv.length ? Argue.argv : rcConfigs.sources;
+transformers = rcConfigs.transformers;
+
 exclude = Array.isArray(exclude) && exclude.length ? exclude : rcConfigs.exclude;
 compare = Array.isArray(compare) && compare.length ? compare : rcConfigs.compare;
 summary = summary || rcConfigs.summary;
@@ -29,6 +38,8 @@ async function main() {
 	try {
 
 		let locales = new Locales();
+
+		locales.transformers.push(...transformers);
 
 		await locales.fromFiles(sources);
 
