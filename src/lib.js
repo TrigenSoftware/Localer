@@ -516,7 +516,7 @@ export default class Locales {
 	 * @param  {Boolean} withSummary
 	 * @return {String} 
 	 */
-	terminalReport(withSummary = false) {
+	terminalReport(withSummary = false, onlyStrings = false) {
 
 		let { locales, unused } = this,
 			added       = [],
@@ -538,8 +538,11 @@ export default class Locales {
 					pushUnique(added, string);
 				}
 
-			} else {
+			} else 
+			if (!onlyStrings) {
 				report += `${'Function:'.yellow} ${fn.green}\n\n`;
+			} else {
+				return;
 			}
 
 			report += `${codeFrame}\n\n`;
@@ -569,7 +572,7 @@ export default class Locales {
 	 * @param  {Boolean} withSummary
 	 * @return {String} 
 	 */
-	htmlReport(withSummary = false) {
+	htmlReport(withSummary = false, onlyStrings = false) {
 
 		let { locales, unused } = this,
 			added       = [],
@@ -591,8 +594,11 @@ export default class Locales {
 					pushUnique(added, string);
 				}
 
-			} else {
+			} else 
+			if (!onlyStrings) {
 				report += `<h3>Function:&nbsp;<span>${fn}</span></h2>`;
+			} else {
+				return;
 			}
 
 			report += `<pre>${escapeHtml(codeFrame.replace(/\t/g, "    "))}</pre>`;

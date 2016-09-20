@@ -7,7 +7,7 @@ Locales collector from js sources.
 # Global usage
 
 ```
-localer [...glob patterns to js source] [--html to generate html] [--summary to show list of added and unused locales] [--compare [...glob patterns to json] to show difference] [--exclude [...glob patterns to json] to exclude locales]
+localer [...glob patterns to js source] [--strings to show code frames only for strings] [--html to generate html] [--summary to show list of added and unused locales] [--compare [...glob patterns to json] to show difference] [--exclude [...glob patterns to json] to exclude locales]
 ```
 
 # Examples
@@ -68,7 +68,8 @@ module.exports = {
 	exclude:      [],
 	compare:      [],
 	summary:      false,
-	html:         false
+	html:         false,
+	strings:      false
 };
 ```
 
