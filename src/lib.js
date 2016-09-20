@@ -555,11 +555,11 @@ export default class Locales {
 			let summary = "\nSummary:\n\n";
 
 			if (added.length) {
-				summary += `Added:\n\n${added.join("\n")}\n\n`;
+				summary += `\tAdded:\n\n\t\t${added.join("\n\t\t")}\n\n`;
 			}
 
 			if (unused.length) {
-				summary += `Unused (maybe):\n\n${unused.join("\n")}\n\n`;
+				summary += `\tUnused (maybe):\n\n\t\t${unused.join("\n\t\t")}\n\n`;
 			}
 
 			report = summary + report;
