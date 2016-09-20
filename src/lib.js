@@ -525,14 +525,11 @@ export default class Locales {
 
 		locales.forEach(({ file, string, fn, codeFrame }) => {
 
-			if (currentFile != file) {
-				currentFile = file;
-				report += `\n${'File:'.yellow} ${file.underline.cyan}\n\n`;
-			}
+			let chunk = '';
 
 			if (typeof string == "string") {
 
-				report += `${'String:'.yellow} ${string.green}\n\n`;
+				chunk += `${'String:'.yellow} ${string.green}\n\n`;
 
 				if (withSummary) {
 					pushUnique(added, string);
@@ -540,12 +537,17 @@ export default class Locales {
 
 			} else 
 			if (!onlyStrings) {
-				report += `${'Function:'.yellow} ${fn.green}\n\n`;
+				chunk += `${'Function:'.yellow} ${fn.green}\n\n`;
 			} else {
 				return;
 			}
 
-			report += `${codeFrame}\n\n`;
+			if (currentFile != file) {
+				currentFile = file;
+				chunk = `\n${'File:'.yellow} ${file.underline.cyan}\n\n${chunk}`;
+			}
+
+			report += `${chunk}${codeFrame}\n\n`;
 		});
 
 		if (withSummary && (added.length || unused.length)) {
@@ -581,14 +583,11 @@ export default class Locales {
 
 		locales.forEach(({ file, string, fn, codeFrame }) => {
 
-			if (currentFile != file) {
-				currentFile = file;
-				report += `<br><h1>File:&nbsp;<span>${file}</span></h1>`;
-			}
+			let chunk = '';
 
 			if (typeof string == "string") {
 
-				report += `<h3>String:&nbsp;<span>${string}</span></h2>`;
+				chunk += `<h3>String:&nbsp;<span>${string}</span></h2>`;
 
 				if (withSummary) {
 					pushUnique(added, string);
@@ -596,12 +595,17 @@ export default class Locales {
 
 			} else 
 			if (!onlyStrings) {
-				report += `<h3>Function:&nbsp;<span>${fn}</span></h2>`;
+				chunk += `<h3>Function:&nbsp;<span>${fn}</span></h2>`;
 			} else {
 				return;
 			}
 
-			report += `<pre>${escapeHtml(codeFrame.replace(/\t/g, "    "))}</pre>`;
+			if (currentFile != file) {
+				currentFile = file;
+				chunk = `<br><h1>File:&nbsp;<span>${file}</span></h1>${chunk}`;
+			}
+
+			report += `${chunk}<pre>${escapeHtml(codeFrame.replace(/\t/g, "    "))}</pre>`;
 			report += `<small>${file}</small><br>`;
 		});
 
