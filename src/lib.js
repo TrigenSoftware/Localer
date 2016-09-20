@@ -671,7 +671,7 @@ export default class Locales {
 				</style>
 			</head>
 			<body>
-				${convert.toHtml(report)}
+				${this.convert.toHtml(report)}
 			</body>
 		</html>`;
 
