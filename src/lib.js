@@ -5,7 +5,6 @@ import CodeFrame    from 'babel-code-frame';
 import Convert      from 'ansi-to-html';
 import escapeHtml   from 'escape-html';
 import Path         from 'path';
-import 'babel-polyfill';
 import 'colour';
 
 const codeFrameOptions = {
@@ -319,7 +318,7 @@ export default class Locales {
 	 * @param  {String|Array<String>} maskOrMasks
 	 * @return {Promise<this>}
 	 */
-	async fromFiles(maskOrMasks) {
+	fromFiles(maskOrMasks) {
 
 		let masks;
 
@@ -332,19 +331,18 @@ export default class Locales {
 			throw new Error('Invalid arguments.');
 		}
 
-		await asyncForEach(masks, async (mask) => { 
+		return asyncForEach(masks, mask => 
 
-			let files = await glob(mask);
+			glob(mask).then(files => 
 			
-			await asyncForEach(files, async (file) => 
-				this.fromCode(
-					await readFile(file),
-					file
+				asyncForEach(files, file => 
+					
+					readFile(file).then(code => 
+						this.fromCode(code, file)
+					)
 				)
-			);
-		});
-
-		return this;
+			)
+		).then(() => this);
 	}
 
 	/**
@@ -394,7 +392,7 @@ export default class Locales {
 	 * @param  {String|Array<String>} maskOrMasks
 	 * @return {Promise<this>}
 	 */
-	async excludeFiles(maskOrMasks) {
+	excludeFiles(maskOrMasks) {
 
 		let cwd = process.cwd(),
 			masks;
@@ -408,18 +406,17 @@ export default class Locales {
 			throw new Error('Invalid arguments.');
 		}
 
-		await asyncForEach(masks, async (mask) => {
+		return asyncForEach(masks, mask =>
 
-			let files = await glob(mask);
+			glob(mask).then(files => 
 
-			files.forEach(file => 
-				this.exclude(
-					require(Path.resolve(cwd, file))
+				files.forEach(file => 
+					this.exclude(
+						require(Path.resolve(cwd, file))
+					)
 				)
-			);
-		});
-
-		return this;
+			)
+		).then(() => this);
 	}
 
 	/**
@@ -479,7 +476,7 @@ export default class Locales {
 	 * @param  {String|Array<String>} maskOrMasks
 	 * @return {Promise<Locales>}
 	 */
-	async diffFiles(maskOrMasks) {
+	diffFiles(maskOrMasks) {
 
 		let cwd = process.cwd(),
 			masks;
@@ -495,23 +492,22 @@ export default class Locales {
 
 		let base = [];
 
-		await asyncForEach(masks, async (mask) => {
+		return asyncForEach(masks, mask =>
 
-			let files = await glob(mask);
+			glob(mask).then(files => 
 
-			files.forEach(file => {
+				files.forEach(file => {
 
-				let json = require(Path.resolve(cwd, file));
+					let json = require(Path.resolve(cwd, file));
 
-				if (Array.isArray(json)) {
-					base.push(...json);
-				} else {
-					base.push(...Object.keys(json));
-				}
-			});
-		});
-
-		return this.diff(base);
+					if (Array.isArray(json)) {
+						base.push(...json);
+					} else {
+						base.push(...Object.keys(json));
+					}
+				})
+			)
+		).then(() => this.diff(base));
 	}
 
 	/**
