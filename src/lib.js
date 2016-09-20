@@ -125,7 +125,8 @@ export default class Locales {
 	/**
 	 * Import data from other instance.
 	 * 
-	 * @param {Locales} locales
+	 * @param  {Locales} locales
+	 * @return {this}
 	 */
 	from(locales) {
 
@@ -164,6 +165,8 @@ export default class Locales {
 
 			this.unused.push(localeString);
 		});
+
+		return this;
 	}
 
 	/**
@@ -781,7 +784,8 @@ export class LocaleSource {
 	/**
 	 * Import data from other instance.
 	 * 
-	 * @param {LocaleSource} localeSource
+	 * @param  {LocaleSource} localeSource
+	 * @return {this}
 	 */
 	from(localeSource) {
 
@@ -796,6 +800,8 @@ export class LocaleSource {
 		this.fn        = localeSource.fn;
 		this.string    = localeSource.string;
 		this.codeFrame = localeSource.codeFrame;
+
+		return this;
 	}
 
 	/**

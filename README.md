@@ -114,7 +114,7 @@ Unused locales.
 
 ### Methods:
 
-#### `void from(Locales locales)`
+#### `Locales from(Locales locales)`
 
 Import data from other instance.
 
@@ -188,7 +188,7 @@ Code frame.
 
 ### Methods:
 
-#### `void from(LocaleSource localeSource)`
+#### `Locales from(LocaleSource localeSource)`
 
 Import data from other instance.
 

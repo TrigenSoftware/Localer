@@ -68,7 +68,13 @@ function main() {
 			console.log(locales.terminalReport(summary, strings));
 		}
 
-		process.exit(Number(Boolean(compare && locales.locales.length)));
+		let allLocalesAreTranslated = locales.locales;
+
+		if (strings) {
+			allLocalesAreTranslated = allLocalesAreTranslated.filter(({string}) => string);
+		}
+
+		process.exit(Number(Boolean(compare && allLocalesAreTranslated.length)));
 	})
 	.catch((err) => {
 		console.error(err);
