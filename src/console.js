@@ -46,7 +46,10 @@ async function main() {
 			console.log(locales.terminalReport(summary));
 		}
 
+		process.exit(Number(Boolean(compare && locales.locales.length)));
+
 	} catch(err) {
 		console.error(err);
+		process.exit(1);
 	}
 }
