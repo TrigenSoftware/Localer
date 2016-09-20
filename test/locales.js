@@ -1,3 +1,4 @@
+import 'babel-polyfill';
 import Locales from '../src/lib';
 import Chai    from 'chai';
 
