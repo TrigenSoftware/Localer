@@ -1,8 +1,8 @@
 [![NPM](https://nodei.co/npm/localer.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/localer/)
 
 # Localer
-Locales collector from js sources.
 
+Locales collector from js sources.
 
 # Global usage
 
@@ -13,14 +13,12 @@ localer [...glob patterns to js source] [--strings to show code frames only for 
 # Examples
 
 For example, you have this code:
-
 ```js
 const translate = __`Translate me!`; 
 const withoutTranslation = __`Without translation`; 
 ```
 
 and JSON file with translations:
-
 ```json
 {
 	"Translate me!": "Переведи меня!",
@@ -29,13 +27,11 @@ and JSON file with translations:
 ```
 
 If you execute next command:
-
 ```bash
 localer main.js --summary --compare ru.json
 ```
 
 you'll get:
-
 ```bash
 
 Summary:
@@ -58,7 +54,6 @@ String: Without translation
 ```
 
 Also you can create `.localerrc.js` file and define default parameters. Defaults:
-
 ```js
 module.exports = {
 	sources:      [],
@@ -70,7 +65,6 @@ module.exports = {
 	strings:      false
 };
 ```
-
 
 # API
 
