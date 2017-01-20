@@ -23,14 +23,14 @@ export default class Locales {
 	 * Functions with one argument.
 	 * @type {Array<String>}
 	 */
-	fns  = ['__', '__n', '__mf', '__l', '__h'];
-	
+	fns = ['__', '__n', '__mf', '__l', '__h'];
+
 	/**
 	 * Functions with few argument.
 	 * @type {Array<String>}
 	 */
 	fns2 = ['__n'];
-	
+
 	/**
 	 * ANSI to HTML instance.
 	 * @type {Convert}
@@ -39,43 +39,43 @@ export default class Locales {
 		fg: '#000',
 		bg: '#FFF'
 	});
-	
+
 	/**
 	 * Babylon parser options.
 	 * @type {Object}
 	 */
 	babylonOptions = {
-		sourceType: "module",
-		plugins: [
-			"jsx",
+		sourceType: 'module',
+		plugins:    [
+			'jsx',
 			// "flow",
-			"asyncFunctions",
-			"classConstructorCall",
-			"doExpressions",
-			"trailingFunctionCommas",
-			"objectRestSpread",
-			"decorators",
-			"classProperties",
-			"exportExtensions",
-			"exponentiationOperator",
-			"asyncGenerators",
-			"functionBind",
-			"functionSent"
+			'asyncFunctions',
+			'classConstructorCall',
+			'doExpressions',
+			'trailingFunctionCommas',
+			'objectRestSpread',
+			'decorators',
+			'classProperties',
+			'exportExtensions',
+			'exponentiationOperator',
+			'asyncGenerators',
+			'functionBind',
+			'functionSent'
 		]
 	};
-	
+
 	/**
 	 * Code transformers.
 	 * @type {Array<Function>}
 	 */
 	transformers = [];
-	
+
 	/**
 	 * Locales soruces.
 	 * @type {Array<LocaleSources>}
 	 */
 	locales = [];
-	
+
 	/**
 	 * Unused locales.
 	 * @type {Array<String>}
@@ -84,7 +84,7 @@ export default class Locales {
 
 	/**
 	 * Locales constructor.
-	 * 
+	 *
 	 * @param  {Array<LocaleSource>|Locales}  fromLocalesOrLocales
 	 * @param  {Array<String>}                fromUnused
 	 * @return {Locales}
@@ -100,7 +100,7 @@ export default class Locales {
 			throw new Error('Invalid arguments.');
 		}
 
-		let fromLocales = fromLocalesOrLocales,
+		const fromLocales = fromLocalesOrLocales,
 			{ locales, unused } = this;
 
 		fromLocales.forEach((localeSource) => {
@@ -124,7 +124,7 @@ export default class Locales {
 
 	/**
 	 * Import data from other instance.
-	 * 
+	 *
 	 * @param  {Locales} locales
 	 * @return {this}
 	 */
@@ -136,9 +136,9 @@ export default class Locales {
 
 		this.convert = locales.convert;
 
-		this.tags         = locales.tags.slice();
-		this.fns          = locales.fns.slice();
-		this.fns2         = locales.fns2.slice();
+		this.tags = locales.tags.slice();
+		this.fns = locales.fns.slice();
+		this.fns2 = locales.fns2.slice();
 		this.transformers = locales.transformers.slice();
 
 		this.babylonOptions = {
@@ -171,7 +171,7 @@ export default class Locales {
 
 	/**
 	 * Create copy of this.
-	 * 
+	 *
 	 * @return {Locales}
 	 */
 	copy() {
@@ -180,7 +180,7 @@ export default class Locales {
 
 	/**
 	 * Collect locales from source code.
-	 * 
+	 *
 	 * @param  {String} code
 	 * @param  {String} file
 	 * @return {this}
@@ -197,10 +197,10 @@ export default class Locales {
 			extname = Path.extname(file);
 		}
 
-		let { tags, fns, fns2, transformers, babylonOptions, locales } = this;
+		const { tags, fns, fns2, transformers, babylonOptions, locales } = this;
 
-		let code = transformers.reduce((code, transform) => 
-			transform(code, extname), 
+		const code = transformers.reduce((code, transform) =>
+			transform(code, extname),
 			sourceCode
 		);
 
@@ -208,31 +208,32 @@ export default class Locales {
 
 			TaggedTemplateExpression(path) {
 
-				let { node } = path;
+				const { node } = path;
 
 				if (!~tags.indexOf(node.tag.name)) {
 					return;
 				}
 
 				locales.push(new LocaleSource(
-					file, 
-					code, 
-					node, 
-					node.tag.name, 
+					file,
+					code,
+					node,
+					node.tag.name,
 					node.quasi.quasis.map(node => node.value.raw).join('%s')
 				));
 			},
 
 			CallExpression(path) {
 
-				let { node }   = path,
-					{ callee } = node,
-					name;
+				const { node } = path,
+					{ callee } = node;
 
-				if (callee.type == "Identifier") {
+				let name = '';
+
+				if (callee.type == 'Identifier') {
 					name = callee.name;
-				} else 
-				if (callee.type == "MemberExpression" && callee.property.type == "Identifier") {
+				} else
+				if (callee.type == 'MemberExpression' && callee.property.type == 'Identifier') {
 					name = callee.property.name;
 				} else {
 					return;
@@ -242,69 +243,69 @@ export default class Locales {
 					return;
 				}
 
-				let { arguments: [first, second] } = node;
+				const { arguments: [first, second] } = node;
 
-				if (typeof first != "undefined") {
+				if (typeof first != 'undefined') {
 
-					if (first.type == "StringLiteral") {
+					if (first.type == 'StringLiteral') {
 
 						locales.push(new LocaleSource(
-							file, 
-							code, 
-							node, 
-							name, 
+							file,
+							code,
+							node,
+							name,
 							first.value
 						));
 
-					} else 
-					if (first.type == "TemplateLiteral") {
+					} else
+					if (first.type == 'TemplateLiteral') {
 
 						locales.push(new LocaleSource(
-							file, 
-							code, 
-							node, 
+							file,
+							code,
+							node,
 							name
 							// first.quasis.map(node => node.value.raw).join('%s')
 						));
 					} else {
 
 						locales.push(new LocaleSource(
-							file, 
-							code, 
-							node, 
+							file,
+							code,
+							node,
 							name
 						));
 					}
 				}
 
-				if (typeof second != "undefined" && ~fns2.indexOf(name)) {
+				if (typeof second != 'undefined' && ~fns2.indexOf(name)) {
 
-					if (second.type == "StringLiteral") {
+					if (second.type == 'StringLiteral') {
 
 						locales.push(new LocaleSource(
-							file, 
-							code, 
-							node, 
-							name, 
+							file,
+							code,
+							node,
+							name,
 							second.value
 						));
 
-					} else 
-					if (second.type == "TemplateLiteral") {
+					} else
+					if (second.type == 'TemplateLiteral') {
 
 						locales.push(new LocaleSource(
-							file, 
-							code, 
-							node, 
-							name 
+							file,
+							code,
+							node,
+							name
 							// second.quasis.map(node => node.value.raw).join('%s')
 						));
 					} else {
 
 						locales.push(new LocaleSource(
-							file, 
-							code, 
-							node, 
+							file,
+							code,
+							node,
 							name
 						));
 					}
@@ -317,13 +318,13 @@ export default class Locales {
 
 	/**
 	 * Collect locales from JavaScript source files by glob pattern.
-	 * 
+	 *
 	 * @param  {String|Array<String>} maskOrMasks
 	 * @return {Promise<this>}
 	 */
 	fromFiles(maskOrMasks) {
 
-		let masks;
+		let masks = [];
 
 		if (typeof maskOrMasks == 'string') {
 			masks = [maskOrMasks];
@@ -334,15 +335,12 @@ export default class Locales {
 			throw new Error('Invalid arguments.');
 		}
 
-		return asyncForEach(masks, mask => 
+		return glob(masks).then(files =>
 
-			glob(mask).then(files => 
-			
-				asyncForEach(files, file => 
-					
-					readFile(file).then(code => 
-						this.fromCode(code, file)
-					)
+			asyncForEach(files, file =>
+
+				readFile(file).then(code =>
+					this.fromCode(code, file)
 				)
 			)
 		).then(() => this);
@@ -350,7 +348,7 @@ export default class Locales {
 
 	/**
 	 * Exclude given locales from `locales` and `unused`.
-	 * 
+	 *
 	 * @param  {Array<String|LocaleSource>|Object<String,any>} arrayOrObjectToExlcude
 	 * @return {this}
 	 */
@@ -364,11 +362,11 @@ export default class Locales {
 
 					if (locale instanceof LocaleSource) {
 						return locale.string;
-					} else 
+					} else
 					if (typeof locale == 'string') {
 						return locale;
 					} else {
-						throw new Error('Invalid locale to exclude.')
+						throw new Error('Invalid locale to exclude.');
 					}
 				});
 		} else
@@ -378,11 +376,11 @@ export default class Locales {
 			throw new Error('Invalid arguments.');
 		}
 
-		this.locales = this.locales.filter(({string}) => 
+		this.locales = this.locales.filter(({ string }) =>
 			!~exclude.indexOf(string)
 		);
 
-		this.unused = this.unused.filter(string => 
+		this.unused = this.unused.filter(string =>
 			!~exclude.indexOf(string)
 		);
 
@@ -391,14 +389,15 @@ export default class Locales {
 
 	/**
 	 * Exclude locales getted from JSON files from `locales` and `unused`.
-	 * 
+	 *
 	 * @param  {String|Array<String>} maskOrMasks
 	 * @return {Promise<this>}
 	 */
 	excludeFiles(maskOrMasks) {
 
-		let cwd = process.cwd(),
-			masks;
+		const cwd = process.cwd();
+
+		let masks = [];
 
 		if (typeof maskOrMasks == 'string') {
 			masks = [maskOrMasks];
@@ -409,14 +408,11 @@ export default class Locales {
 			throw new Error('Invalid arguments.');
 		}
 
-		return asyncForEach(masks, mask =>
+		return glob(masks).then(files =>
 
-			glob(mask).then(files => 
-
-				files.forEach(file => 
-					this.exclude(
-						require(Path.resolve(cwd, file))
-					)
+			files.forEach(file =>
+				this.exclude(
+					require(Path.resolve(cwd, file))
 				)
 			)
 		).then(() => this);
@@ -424,7 +420,7 @@ export default class Locales {
 
 	/**
 	 * Get difference between locales parsed from JavaScript sources and locales.
-	 * 
+	 *
 	 * @param  {Array<String|LocaleSource>|Object<String,any>} arrayOrObjectBase
 	 * @return {Locales}
 	 */
@@ -438,11 +434,11 @@ export default class Locales {
 
 					if (locale instanceof LocaleSource) {
 						return locale.string;
-					} else 
+					} else
 					if (typeof locale == 'string') {
 						return locale;
 					} else {
-						throw new Error('Invalid locale to exclude.')
+						throw new Error('Invalid locale to exclude.');
 					}
 				});
 		} else
@@ -452,12 +448,12 @@ export default class Locales {
 			throw new Error('Invalid arguments.');
 		}
 
-		let compareResult = new Locales(this),
-			usedStrings   = [];
+		const compareResult = new Locales(this),
+			usedStrings     = [];
 
 		compareResult.locales = compareResult.locales.filter(({ string }) => {
 
-			if (typeof string == "undefined") {
+			if (typeof string == 'undefined') {
 				return true;
 			}
 
@@ -466,7 +462,7 @@ export default class Locales {
 			return !~base.indexOf(string);
 		});
 
-		compareResult.unused = base.filter((string) => 
+		compareResult.unused = base.filter(string =>
 			!~usedStrings.indexOf(string)
 		);
 
@@ -475,14 +471,15 @@ export default class Locales {
 
 	/**
 	 * Get difference between locales parsed from JavaScript sources and locales from JSON files.
-	 * 
+	 *
 	 * @param  {String|Array<String>} maskOrMasks
 	 * @return {Promise<Locales>}
 	 */
 	diffFiles(maskOrMasks) {
 
-		let cwd = process.cwd(),
-			masks;
+		const cwd = process.cwd();
+
+		let masks = [];
 
 		if (typeof maskOrMasks == 'string') {
 			masks = [maskOrMasks];
@@ -493,44 +490,42 @@ export default class Locales {
 			throw new Error('Invalid arguments.');
 		}
 
-		let base = [];
+		const base = [];
 
-		return asyncForEach(masks, mask =>
+		return glob(masks).then(files =>
 
-			glob(mask).then(files => 
+			files.forEach((file) => {
 
-				files.forEach(file => {
+				const json = require(Path.resolve(cwd, file));
 
-					let json = require(Path.resolve(cwd, file));
-
-					if (Array.isArray(json)) {
-						base.push(...json);
-					} else {
-						base.push(...Object.keys(json));
-					}
-				})
-			)
+				if (Array.isArray(json)) {
+					base.push(...json);
+				} else {
+					base.push(...Object.keys(json));
+				}
+			})
 		).then(() => this.diff(base));
 	}
 
 	/**
 	 * Generate report for terminal.
-	 * 
+	 *
 	 * @param  {Boolean} withSummary
-	 * @return {String} 
+	 * @return {String}
 	 */
 	terminalReport(withSummary = false, onlyStrings = false) {
 
-		let { locales, unused } = this,
-			added       = [],
-			report      = "", 
-			currentFile = "";
+		const { locales, unused } = this,
+			added = [];
+
+		let report      = '',
+			currentFile = '';
 
 		locales.forEach(({ file, string, fn, codeFrame }) => {
 
 			let chunk = '';
 
-			if (typeof string == "string") {
+			if (typeof string == 'string') {
 
 				chunk += `${'String:'.yellow} ${string.green}\n\n`;
 
@@ -538,7 +533,7 @@ export default class Locales {
 					pushUnique(added, string);
 				}
 
-			} else 
+			} else
 			if (!onlyStrings) {
 				chunk += `${'Function:'.yellow} ${fn.green}\n\n`;
 			} else {
@@ -555,14 +550,14 @@ export default class Locales {
 
 		if (withSummary && (added.length || unused.length)) {
 
-			let summary = "\nSummary:\n\n".yellow;
+			let summary = '\nSummary:\n\n'.yellow;
 
 			if (added.length) {
-				summary += `    ${'Added:'.yellow}\n        ${added.join("\n        ")}\n\n`;
+				summary += `    ${'Added:'.yellow}\n        ${added.join('\n        ')}\n\n`;
 			}
 
 			if (unused.length) {
-				summary += `    ${'Unused (maybe):'.yellow}\n        ${unused.join("\n        ")}\n\n`;
+				summary += `    ${'Unused (maybe):'.yellow}\n        ${unused.join('\n        ')}\n\n`;
 			}
 
 			report = summary + report;
@@ -573,22 +568,23 @@ export default class Locales {
 
 	/**
 	 * Generate report as html.
-	 * 
+	 *
 	 * @param  {Boolean} withSummary
-	 * @return {String} 
+	 * @return {String}
 	 */
 	htmlReport(withSummary = false, onlyStrings = false) {
 
-		let { locales, unused } = this,
-			added       = [],
-			report      = "",
-			currentFile = "";
+		const { locales, unused } = this,
+			added = [];
+
+		let report      = '',
+			currentFile = '';
 
 		locales.forEach(({ file, string, fn, codeFrame }) => {
 
 			let chunk = '';
 
-			if (typeof string == "string") {
+			if (typeof string == 'string') {
 
 				chunk += `<h3>String:&nbsp;<span>${string}</span></h2>`;
 
@@ -596,7 +592,7 @@ export default class Locales {
 					pushUnique(added, string);
 				}
 
-			} else 
+			} else
 			if (!onlyStrings) {
 				chunk += `<h3>Function:&nbsp;<span>${fn}</span></h2>`;
 			} else {
@@ -608,20 +604,20 @@ export default class Locales {
 				chunk = `<br><h1>File:&nbsp;<span>${file}</span></h1>${chunk}`;
 			}
 
-			report += `${chunk}<pre>${escapeHtml(codeFrame.replace(/\t/g, "    "))}</pre>`;
+			report += `${chunk}<pre>${escapeHtml(codeFrame.replace(/\t/g, '    '))}</pre>`;
 			report += `<small>${file}</small><br>`;
 		});
 
 		if (withSummary && (added.length || unused.length)) {
 
-			let summary = "<h1>Summary:</h1>";
+			let summary = '<h1>Summary:</h1>';
 
 			if (added.length) {
-				summary += `<h3>Added:</h3><pre>${escapeHtml(added.join("\n"))}</pre><br>`;
+				summary += `<h3>Added:</h3><pre>${escapeHtml(added.join('\n'))}</pre><br>`;
 			}
 
 			if (unused.length) {
-				summary += `<h3>Unused<sup>(maybe)</sup>:</h3><pre>${escapeHtml(unused.join("\n"))}</pre><br>`;
+				summary += `<h3>Unused<sup>(maybe)</sup>:</h3><pre>${escapeHtml(unused.join('\n'))}</pre><br>`;
 			}
 
 			report = summary + report;
@@ -630,10 +626,10 @@ export default class Locales {
 		report = `
 		<!DOCTYPE html>
 		<html>
-		    <head>
-		        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-		        <title>REPORT</title>
-		        <style>
+			<head>
+				<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+				<title>REPORT</title>
+				<style>
 
 					body {
 						font-family: Arial, Calibri;
@@ -694,37 +690,37 @@ export class LocaleSource {
 	 * Path to file.
 	 * @type {String}
 	 */
-	file      = null;
+	file = null;
 
 	/**
 	 * Type of node.
 	 * @type {String}
 	 */
-	type      = null;
+	type = null;
 
 	/**
 	 * Line of token.
 	 * @type {Number}
 	 */
-	line      = null;
+	line = null;
 
 	/**
 	 * Column of token.
 	 * @type {Number}
 	 */
-	column    = null;
+	column = null;
 
 	/**
 	 * Function name.
 	 * @type {String}
 	 */
-	fn        = null;
+	fn = null;
 
 	/**
 	 * Locale string.
 	 * @type {String}
 	 */
-	string    = null;
+	string = null;
 
 	/**
 	 * Code frame.
@@ -734,7 +730,7 @@ export class LocaleSource {
 
 	/**
 	 * LocaleSource constructor.
-	 * 
+	 *
 	 * @param  {String|LocaleSource} fileOrLocaleSource
 	 * @param  {String}              code
 	 * @param  {Node}                node
@@ -749,7 +745,7 @@ export class LocaleSource {
 			return;
 		}
 
-		let file = fileOrLocaleSource;
+		const file = fileOrLocaleSource;
 
 		if (typeof file != 'string' && typeof file != 'undefined') {
 			throw new Error('File path must be a string');
@@ -771,11 +767,11 @@ export class LocaleSource {
 			throw new Error('Locale string must be setted');
 		}
 
-		this.file   = file;
-		this.type   = node.type;
-		this.line   = node.loc.start.line;
+		this.file = file;
+		this.type = node.type;
+		this.line = node.loc.start.line;
 		this.column = node.loc.start.column + 1;
-		this.fn     = fn;
+		this.fn = fn;
 		this.string = string;
 
 		this.codeFrame = CodeFrame(code, this.line, this.column, codeFrameOptions);
@@ -783,7 +779,7 @@ export class LocaleSource {
 
 	/**
 	 * Import data from other instance.
-	 * 
+	 *
 	 * @param  {LocaleSource} localeSource
 	 * @return {this}
 	 */
@@ -793,12 +789,12 @@ export class LocaleSource {
 			throw new Error('Invalid locale source.');
 		}
 
-		this.file      = localeSource.file;
-		this.type      = localeSource.type;
-		this.line      = localeSource.line;
-		this.column    = localeSource.column;
-		this.fn        = localeSource.fn;
-		this.string    = localeSource.string;
+		this.file = localeSource.file;
+		this.type = localeSource.type;
+		this.line = localeSource.line;
+		this.column = localeSource.column;
+		this.fn = localeSource.fn;
+		this.string = localeSource.string;
 		this.codeFrame = localeSource.codeFrame;
 
 		return this;
@@ -806,7 +802,7 @@ export class LocaleSource {
 
 	/**
 	 * Create copy of this.
-	 * 
+	 *
 	 * @return {LocaleSource}
 	 */
 	copy() {

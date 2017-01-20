@@ -1,58 +1,89 @@
 import Glob from 'glob';
 import Fs   from 'fs';
 
-export function asyncForEach(array, callback, resolvedObject) {
+export function asyncForEach(array, each, resolvedObject) {
 
-    let balancer = 0, i = 0, _this = array;
+	const _this = array;
 
-    return new Promise((resolve, reject) => {
+	let i = 0;
 
-        if (!_this.length) {
-            return resolve(resolvedObject);
-        }
+	return new Promise((resolve, reject) => {
 
-        callback(_this[i], i++).then(function next() {
+		if (!_this.length) {
+			resolve(resolvedObject);
+			return;
+		}
 
-            if (i >= _this.length) {
-                return resolve(resolvedObject);
-            }
+		each(_this[i], i++).then(function next() {
 
-            return callback(_this[i], i++).then(next).catch(reject);
-        }).catch(reject); 
-    });
+			if (i >= _this.length) {
+				return resolve(resolvedObject);
+			}
+
+			return each(_this[i], i++).then(next).catch(reject);
+		}).catch(reject);
+	});
 }
 
 export function pushUnique(array, element) {
 
-    if (array.indexOf(element) != -1) {
-        return element;
-    }
+	if (array.indexOf(element) != -1) {
+		return element;
+	}
 
-    return array.push(element);
+	return array.push(element);
 }
 
 export function readFile(file) {
-    return new Promise((resolve, reject) => {
-        Fs.readFile(file, 'utf8', (err, data) => {
+	return new Promise((resolve, reject) => {
+		Fs.readFile(file, 'utf8', (err, data) => {
 
-            if (err) {
-                return reject(err);
-            }
+			if (err) {
+				reject(err);
+				return;
+			}
 
-            resolve(data);
-        });
-    });
+			resolve(data);
+		});
+	});
 }
 
-export function glob(mask) {
-    return new Promise((resolve, reject) => {
-        Glob(mask, (err, files) => {
-    
-            if (err) {
-                return reject(err);
-            }
+export function glob(mask, inputIgnore = []) {
 
-            resolve(files);
-        });
-    });
+	const ignore = inputIgnore.slice();
+
+	if (Array.isArray(mask)) {
+
+		const masks = [],
+			files   = [];
+
+		mask.forEach((mask) => {
+
+			if (mask.indexOf('!') == 0) {
+				pushUnique(ignore, mask.replace('!', ''));
+			} else {
+				masks.push(mask);
+			}
+		});
+
+		return Promise.all(
+			masks.map(_ =>
+				glob(_, ignore).then(_ =>
+					_.forEach(_ => pushUnique(files, _))
+				)
+			)
+		).then(() => files);
+	}
+
+	return new Promise((resolve, reject) => {
+		Glob(mask, { ignore }, (err, files) => {
+
+			if (err) {
+				reject(err);
+				return;
+			}
+
+			resolve(files);
+		});
+	});
 }

@@ -1,13 +1,15 @@
 {
   "name": "localer",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Locales collector from js sources.",
   "main": "lib/lib.js",
   "bin": {
     "localer": "./lib/bin.js"
   },
   "scripts": {
-    "test": "mocha -b test/locales.js",
+    "test": "npm run eslint && npm run mocha",
+    "eslint": "eslint --cache 'src/*.js'",
+    "mocha": "mocha -b test/locales.js",
     "compile": "babel ./src -d ./lib",
     "prepublish": "npm run compile"
   },
@@ -46,6 +48,8 @@
     "babel-preset-stage-0": "^6.5.0",
     "babel-register": "^6.14.0",
     "chai": "^3.5.0",
+    "eslint": "^3.13.1",
+    "eslint-config-trigen": "^1.0.0",
     "mocha": "^3.0.2"
   },
   "babel": {
