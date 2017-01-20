@@ -1,7 +1,10 @@
 {
   "name": "localer",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "description": "Locales collector from js sources.",
+  "engines": {
+    "node": ">=4.0.0"
+  },
   "main": "lib/lib.js",
   "bin": {
     "localer": "./lib/bin.js"
