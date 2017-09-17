@@ -502,7 +502,7 @@ export default class Locales {
 				if (Array.isArray(json)) {
 					base.push(...json);
 				} else {
-					base.push(...Object.keys(json));
+					base.push(...flatKeys(json));
 				}
 			})
 		).then(() => this.diff(base));

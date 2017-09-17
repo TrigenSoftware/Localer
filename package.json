@@ -1,6 +1,6 @@
 {
   "name": "localer",
-  "version": "2.5.1",
+  "version": "2.5.2",
   "description": "Locales collector from js sources.",
   "engines": {
     "node": ">=4.0.0"
