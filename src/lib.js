@@ -49,6 +49,7 @@ export default class Locales {
 		plugins:    [
 			'jsx',
 			// "flow",
+			'dynamicImport',
 			'asyncFunctions',
 			'classConstructorCall',
 			'doExpressions',
