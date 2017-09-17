@@ -1,4 +1,4 @@
-import { pushUnique, asyncForEach, readFile, glob } from './helpers';
+import { flatKeys, pushUnique, asyncForEach, readFile, glob } from './helpers';
 import * as Babylon from 'babylon';
 import Traverse     from 'babel-traverse';
 import CodeFrame    from 'babel-code-frame';
@@ -372,7 +372,7 @@ export default class Locales {
 				});
 		} else
 		if (typeof arrayOrObjectToExlcude == 'object' && arrayOrObjectToExlcude != null) {
-			exclude = Object.keys(arrayOrObjectToExlcude);
+			exclude = flatKeys(arrayOrObjectToExlcude);
 		} else {
 			throw new Error('Invalid arguments.');
 		}
@@ -444,7 +444,7 @@ export default class Locales {
 				});
 		} else
 		if (typeof arrayOrObjectBase == 'object' && arrayOrObjectBase != null) {
-			base = Object.keys(arrayOrObjectBase);
+			base = flatKeys(arrayOrObjectBase);
 		} else {
 			throw new Error('Invalid arguments.');
 		}

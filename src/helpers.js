@@ -1,6 +1,29 @@
 import Glob from 'glob';
 import Fs   from 'fs';
 
+export function flatKeys(object) {
+
+	const keys = [];
+
+	for (const key in object) {
+
+		const value = object[key];
+
+		if (typeof value == 'object'
+			&& !(
+				value.hasOwnProperty('one')
+				&& value.hasOwnProperty('other')
+			)
+		) {
+			keys.push(...flatKeys(value).map(_ => `${key}.${_}`));
+		} else {
+			keys.push(key);
+		}
+	}
+
+	return keys;
+}
+
 export function asyncForEach(array, each, resolvedObject) {
 
 	const _this = array;
