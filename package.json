@@ -33,7 +33,7 @@
   },
   "homepage": "https://github.com/TrigenSoftware/Localer#readme",
   "dependencies": {
-    "ansi-to-html": "^0.4.1",
+    "ansi-to-html": "^0.6.11",
     "argue-cli": "^1.1.1",
     "babel-code-frame": "^6.26.0",
     "babel-traverse": "^6.26.0",
